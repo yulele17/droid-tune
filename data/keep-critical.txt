@@ -1,0 +1,65 @@
+# 冻结保护名单 —— 命中这里的包永不做 disable-user。
+#
+# 背景：UAD 官方清单把包分成 Recommended / Advanced / Expert / Unsafe，
+# 但那个分级只是社区经验，落到具体 ROM 上经常不准。下面是**实测会让功能直接坏掉**的，
+# 按必要条件保留，宁可少冻几个。
+#
+# 语法：一行一条，# 开头为注释，支持 * 通配。
+
+# ===== 通用：安卓基础组件 =====
+com.android.systemui            # 冻了直接没桌面/状态栏
+com.android.settings
+com.android.providers.settings
+com.android.phone
+com.android.dialer
+com.android.contacts
+com.android.providers.contacts
+com.android.providers.telephony
+com.android.mms
+com.android.inputmethod.*
+com.android.inputmethod.latin
+com.android.vending             # Play 商店
+com.android.shell
+com.android.keyguard
+com.android.systemui.plugin.*
+
+# ===== 通用：别家 App 依赖广泛的 =====
+com.google.android.gms          # 大量 App 强依赖，冻了满屏弹窗
+com.google.android.gsf
+com.google.android.webview      # 冻了大面积 App 白屏
+com.google.android.trichromelibrary
+
+# ===== 小米 / Redmi / HyperOS =====
+com.miui.packageinstaller       # 国行移除会开机卡死（bootloop），高危
+com.miui.gallery                # 冻了没法发图片、截图也看不了
+com.miui.securitycenter         # 安全中心：权限管理入口，冻了没法改权限
+com.xiaomi.account              # 小米账号 / 查找手机
+com.miui.cloudservice           # 云同步
+com.miui.micloudsync
+com.miui.backup                 # 本地备份
+com.miui.cloudbackup            # 小米云备份（UAD 标 Recommended，但实测冻了会丢备份能力）
+com.miui.accessibility          # 无障碍，冻结可能导致部分 ROM 反复弹窗
+com.miui.face                   # 人脸解锁
+com.xiaomi.market               # GetApps，国行常靠它侧载 Play
+com.xiaomi.smarthome            # 米家，用 IoT 就留
+com.miui.securityinputmethod    # 安全键盘，支付场景要用
+com.xiaomi.bluetooth            # 蓝牙组件，冻结后蓝牙可能直接不可用
+com.xiaomi.trustservice         # 设备信任代理，冻结后支付/登录可能异常
+com.xiaomi.simactivate.service  # SIM 激活，冻结后 SIM 可能识别不出
+
+# ===== 华为 / 荣耀 =====
+com.huawei.systemmanager
+com.huawei.android.launcher
+com.android.hwmirage
+
+# ===== OPPO / ColorOS =====
+# 注意：不写 com.coloros.* 这种通配，否则会把厂商名下所有包一并保护，debloat 直接失效
+com.coloros.gamespace
+com.coloros.assistantscreen
+com.android.launcher
+
+# ===== vivo / OriginOS =====
+# 同理，只列具体关键件
+com.vivo.smartshopping*
+com.vivo.abe
+com.android.bbk.launcher

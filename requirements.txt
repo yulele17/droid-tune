@@ -1,0 +1,9 @@
+# 项目本体：零 Python 依赖，只用标准库
+#
+# 刻意不引入 adbutils / python-adb：
+#   1. adbutils 自带的 adb.exe 在 Windows 下缺 AdbWinApi.dll / AdbWinUsbApi.dll，
+#      单独复制主程序执行必然失败（exit 127，无任何输出），是有名的排查黑洞；
+#   2. "废掉依赖" 换来的是必须由用户自己装 platform-tools，一次性成本，之后所有设备通用。
+#
+# 因此 requirements.txt 留空，仅保留说明。
+# 唯一前置条件：系统 PATH 上能找到可用的 adb（见 docs/01-准备工作.md）。

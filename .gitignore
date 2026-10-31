@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 本机运行产物：含设备序列号与个人改动记录，绝不能入库
+# （刻意不用 *.txt 通配，否则会把仓库里的 requirements.txt / data/*.txt 一并忽略）
+backups/
+snapshots/
+logs/
+installed_*.txt
+freeze_list.txt
+disabled_*.txt
+channels.tsv
+uad_lists.json
+*.log
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
