@@ -33,21 +33,21 @@ java.lang.SecurityException: Cannot disable system packages
 这台国行 HyperOS 3 把小米自家绝大部分预装/遥测/overlay 包标成了系统核心包，
 `pm disable-user` 对它们不产生任何作用。
 
-## 冻结成功的 7 个
+## 冻结成功的 7 个（后经机主确认，4 个已解冻）
 
 | 包名 | 说明 | 现状 |
 |---|---|---|
-| `com.mi.health` | 小米健康 | **已解冻**（机主实际在用，事后恢复；已加入 `data/keep-critical.txt`） |
-| `com.miui.cleanmaster` | 清理大师 | 保持冻结 |
+| `com.mi.health` | 小米健康 | **已解冻**（机主实际在用） |
+| `com.miui.cleanmaster` | 清理大师 | **已解冻**（机主实际在用） |
+| `com.xiaomi.mibrain.speech` | 小爱语音引擎相关 | **已解冻**（机主实际在用） |
+| `com.xiaomi.shop` | 小米商城 | **已解冻**（机主实际在用） |
 | `com.miui.newhome` | 新版桌面（未启用则无害） | 保持冻结 |
 | `com.miui.newmidrive` | 小米云盘新版 | 保持冻结 |
-| `com.xiaomi.mibrain.speech` | 小爱语音引擎相关 | 保持冻结 |
-| `com.xiaomi.shop` | 小米商城 | 保持冻结 |
 | `com.xiaomi.vipaccount` | 小米会员 / VIP 账号 | 保持冻结 |
 
-> ⚠️ `com.mi.health` 是一次真实的**漏判**：UAD 把它标成 `Recommended`，
-> 它看起来像可有可无的预装组件，但这台机上的机主在用它的运动数据。
-> 现已补进保护名单，详见 [CONTRIBUTING.md](../../CONTRIBUTING.md) 里的「一个真实的漏判案例」。
+> ⚠️ 这是一次真实的**漏判**：UAD 把这四个都标成 `Recommended`，
+> 它们看起来像可有可无的预装组件，但这台机的机主实际在用。
+> 现已全部补进 `data/keep-critical.txt`，详见 [CONTRIBUTING.md](../../CONTRIBUTING.md) 里的「一个真实的漏判案例」。
 
 ## 被拒绝的代表包（部分）
 

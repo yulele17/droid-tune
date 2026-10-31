@@ -46,8 +46,10 @@ com.miui.securityinputmethod    # 安全键盘，支付场景要用
 com.xiaomi.bluetooth            # 蓝牙组件，冻结后蓝牙可能直接不可用
 com.xiaomi.trustservice         # 设备信任代理，冻结后支付/登录可能异常
 com.xiaomi.simactivate.service  # SIM 激活，冻结后 SIM 可能识别不出
-com.mi.health                   # 小米健康（运动/步数数据），实测漏判：UAD 标 Recommended，
-                                # 但它是有实际功能的工具 App，误冻后用户要用「保留」反悔
+com.mi.health                   # 小米健康（运动/步数数据），实测漏判：UAD 标 Recommended，但机主实际在用
+com.xiaomi.shop                 # 小米商城，机主实测在用
+com.xiaomi.mibrain.speech       # 小爱语音引擎，机主实测在用
+com.miui.cleanmaster            # 清理大师，机主实测在用
 
 # ===== 华为 / 荣耀 =====
 com.huawei.systemmanager
