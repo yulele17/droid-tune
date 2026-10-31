@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.fake_adb import FakeAdb  # noqa: E402
 from tune import debloat, probe, smooth, snapshot  # noqa: E402
 from tune import device as device_mod  # noqa: E402
+from tune import safety  # noqa: E402
 
 
 def fake_info():
@@ -121,6 +122,40 @@ class TestLineEndings(unittest.TestCase):
             raw = f.read()
         self.assertNotIn(b"\r\n", raw)
         self.assertTrue(raw.endswith(b"\n"))
+
+
+class TestKeepList(unittest.TestCase):
+    """保护名单是纯文本，Windows 上被 git 检出就是 CRLF，必须能正确解析。"""
+
+    def _write(self, content, newline="\n"):
+        tmp = tempfile.mkdtemp()
+        path = os.path.join(tmp, "keep.txt")
+        with open(path, "w", encoding="utf-8", newline=newline) as f:
+            f.write(content)
+        return path
+
+    def test_crlf_file_still_matches(self):
+        path = self._write("com.mi.health   # 小米健康\r\ncom.a.b\r\n", newline="")
+        pats = safety.load_keep_patterns(path)
+        self.assertTrue(safety.is_protected("com.mi.health", pats))
+        self.assertTrue(safety.is_protected("com.a.b", pats))
+
+    def test_reason_is_captured(self):
+        """行尾注释是给人看的，必须能被取出来，而不是被丢掉。"""
+        path = self._write("com.mi.health   # 小米健康（运动数据）\n")
+        pats = safety.load_keep_patterns(path)
+        self.assertEqual(pats, [("com.mi.health", "小米健康（运动数据）")])
+        self.assertIn("小米健康", safety.is_protected("com.mi.health", pats))
+
+    def test_whole_line_comment_ignored(self):
+        path = self._write("# 这是注释\n\ncom.a.b  # 真规则\n")
+        pats = safety.load_keep_patterns(path)
+        self.assertEqual([p for p, _ in pats], ["com.a.b"])
+
+    def test_shipped_list_protects_health(self):
+        """仓库里那份名单本身必须挡住 com.mi.health（真实漏判的防回归）。"""
+        pats = safety.load_keep_patterns()
+        self.assertIsNotNone(safety.is_protected("com.mi.health", pats))
 
 
 class TestProbe(unittest.TestCase):

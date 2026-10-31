@@ -1,0 +1,14 @@
+# 统一强制 LF 行尾。
+#
+# 为什么需要：Windows 的 git 默认 core.autocrlf=true，检出时会把 LF 改成 CRLF。
+# 本项目有多处逻辑把「行」当协议用（包名清单逐行读取、LF/CRLF 直接决定
+# pm disable-user 是报 Unknown package 还是正常执行），
+# 行尾一旦被 Git 改动就会静默出错，所以在这里锁死。
+
+* text=auto eol=lf
+
+# 这几个是逐行协议文件，务必 LF
+data/*.txt text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf

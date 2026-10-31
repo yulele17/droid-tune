@@ -66,6 +66,7 @@ com.mi.health                   # 小米健康（运动/步数数据），实测
    （理由写在 `requirements.txt` 里：adbutils 这条路我们踩过坑，不想让下游再踩）
 2. **所有要交给 adb 的文件必须 LF 落盘**，用 `debloat.write_text()`，别直接 `open(w)` ——
    Windows 的默认行为会写 CRLF，包名尾巴带 `\r` 后会全批报 Unknown package。
+   仓库已用 `.gitattributes` 强制 `eol=lf`，别绕过它。
 3. **调 adb 的 subprocess 必须 `stdin=subprocess.DEVNULL`**，否则在 shell 循环里会吃掉循环的输入。
 4. **任何新增的修改类命令，必须同时写快照。**
 5. 中文注释优先 —— 这个项目的受众主要是中文用户。

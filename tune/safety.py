@@ -21,28 +21,37 @@ DEFAULT_KEEP_FILE = os.path.join(
 
 
 def load_keep_patterns(path: Optional[str] = None) -> List[Tuple[str, str]]:
-    """读取保护名单，返回 [(pattern, reason)]。不存在则返回空表而不是抛错。"""
+    """读取保护名单，返回 [(pattern, reason)]。不存在则返回空表而不是抛错。
+
+    行格式：``com.example.foo   # 冻结后的具体症状``
+    ``#`` 前是包名/通配符，后是原因说明，两者都会被返回。
+
+    读取时统一 strip()，因此 Windows 上被 git 检出成 CRLF 的文件也能正确解析。
+    """
     path = path or DEFAULT_KEEP_FILE
     out: List[Tuple[str, str]] = []
     if not os.path.isfile(path):
         return out
     with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.split("#", 1)[0].strip()
-            if not line:
+        for raw in f:
+            raw = raw.strip()
+            if not raw or raw.startswith("#"):
                 continue
-            reason = ""
-            if "#" in line:  # 行尾注释当原因（上面 split 已处理，这里兼容 inline 写法）
-                pass
-            out.append((line, reason))
+            pattern, _, reason = raw.partition("#")
+            pattern = pattern.strip()
+            if not pattern:
+                continue
+            out.append((pattern, reason.strip()))
     return out
 
 
 def is_protected(package: str, patterns: Optional[List[Tuple[str, str]]] = None) -> Optional[str]:
     """命中保护名单返回命中说明（用作提示符），没命中返回 None。"""
     pkg = normalize_text(package)
-    for pat, _ in (patterns if patterns is not None else load_keep_patterns()):
+    for pat, reason in (patterns if patterns is not None else load_keep_patterns()):
         if fnmatch.fnmatch(pkg, pat):
+            if reason:
+                return f"命中保护规则 {pat}（{reason}）"
             return f"命中保护规则 {pat}"
     return None
 
