@@ -1,5 +1,7 @@
 # droid-tune
 
+![droid-tune](assets/banner.png)
+
 **不 root 的国产安卓流畅化调优工具。** 零 Python 依赖，所有改动可一键还原。
 
 > 一句话立场：**别急着冻 —— 先问清楚这台 ROM 让不让冻。**
