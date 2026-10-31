@@ -35,15 +35,19 @@ java.lang.SecurityException: Cannot disable system packages
 
 ## 冻结成功的 7 个
 
-| 包名 | 说明 |
-|---|---|
-| `com.mi.health` | 小米健康 |
-| `com.miui.cleanmaster` | 清理大师 |
-| `com.miui.newhome` | 新版桌面（未启用则无害） |
-| `com.miui.newmidrive` | 小米云盘新版 |
-| `com.xiaomi.mibrain.speech` | 小爱语音引擎相关 |
-| `com.xiaomi.shop` | 小米商城 |
-| `com.xiaomi.vipaccount` | 小米会员 / VIP 账号 |
+| 包名 | 说明 | 现状 |
+|---|---|---|
+| `com.mi.health` | 小米健康 | **已解冻**（机主实际在用，事后恢复；已加入 `data/keep-critical.txt`） |
+| `com.miui.cleanmaster` | 清理大师 | 保持冻结 |
+| `com.miui.newhome` | 新版桌面（未启用则无害） | 保持冻结 |
+| `com.miui.newmidrive` | 小米云盘新版 | 保持冻结 |
+| `com.xiaomi.mibrain.speech` | 小爱语音引擎相关 | 保持冻结 |
+| `com.xiaomi.shop` | 小米商城 | 保持冻结 |
+| `com.xiaomi.vipaccount` | 小米会员 / VIP 账号 | 保持冻结 |
+
+> ⚠️ `com.mi.health` 是一次真实的**漏判**：UAD 把它标成 `Recommended`，
+> 它看起来像可有可无的预装组件，但这台机上的机主在用它的运动数据。
+> 现已补进保护名单，详见 [CONTRIBUTING.md](../../CONTRIBUTING.md) 里的「一个真实的漏判案例」。
 
 ## 被拒绝的代表包（部分）
 
@@ -65,6 +69,10 @@ java.lang.SecurityException: Cannot disable system packages
 
 另外 `com.miui.cloudbackup` 也被列入了保护名单 —— UAD 把它标成 Recommended，
 但冻了会丢掉云备份能力，属于典型的「清单分级与本地实际不符」。
+
+**事后补录**：`com.mi.health`（小米健康）最初也在冻结名单里，跑完机主反馈要保留，
+已解冻并补进 `data/keep-critical.txt`。这说明"清单分级"和"这台机主用不用"是两件事 ——
+前者只是社区经验，后者才是判据。
 
 ## 流畅调优部分
 
