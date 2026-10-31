@@ -59,7 +59,7 @@
 ### 安装
 
 ```bash
-git clone https://github.com/<你的账号>/droid-tune.git
+git clone https://github.com/yulele17/droid-tune.git
 cd droid-tune
 python -m tune devices     # 零依赖，不需要 pip install
 ```
