@@ -270,10 +270,13 @@ def scan_files(paths: List[str], pats: List[str], denylist: List[str]) -> List[H
     return hits
 
 
-def scan_history(denylist: List[str]) -> Tuple[List[Hit], dict]:
+def scan_history(denylist: List[str], pats: Optional[List[str]] = None) -> Tuple[List[Hit], dict]:
     hits: List[Hit] = []
-    stats = {"blobs": 0, "reachable": 0, "unreachable": 0}
+    stats = {"blobs": 0, "reachable": 0, "unreachable": 0, "skipped": 0}
+    pats = pats if pats is not None else load_ignore()
     reach = reachable_blobs()
+    bmap = blob_paths()
+    ignored_hashes = ignored_blob_hashes(pats)
     for sha, _ in iter_all_blobs():
         stats["blobs"] += 1
         state = "已发布" if sha in reach else "仅本地"
@@ -281,6 +284,14 @@ def scan_history(denylist: List[str]) -> Tuple[List[Hit], dict]:
             stats["reachable"] += 1
         else:
             stats["unreachable"] += 1
+        # .privacyignore 同样适用于历史里的版本
+        paths = bmap.get(sha)
+        if paths and all(is_ignored(p, pats) for p in paths):
+            stats["skipped"] += 1
+            continue
+        if not paths and sha in ignored_hashes:
+            stats["skipped"] += 1
+            continue
         text = blob_text(sha)
         if not text or "\x00" in text[:2048]:
             continue
@@ -317,9 +328,10 @@ def scan_commit_meta() -> List[Hit]:
     return hits
 
 
-def scan_remote(denylist: List[str]) -> Tuple[List[Hit], int]:
+def scan_remote(denylist: List[str], pats: Optional[List[str]] = None) -> Tuple[List[Hit], int]:
     """直接扫 GitHub 线上已发布文件 —— 本地干净不代表线上干净。"""
     hits: List[Hit] = []
+    pats = pats if pats is not None else load_ignore()
     code, out = git("remote", "get-url", "origin")
     if code != 0 or "github.com" not in out:
         return hits, 0
@@ -348,6 +360,8 @@ def scan_remote(denylist: List[str]) -> Tuple[List[Hit], int]:
         path = f["path"]
         if path.lower().endswith((".png", ".jpg", ".jpeg", ".pdf", ".zip", ".pyc")):
             continue
+        if is_ignored(path, pats):
+            continue
         u = f"{raw_base}/{urllib.parse.quote(path)}"
         try:
             req = urllib.request.Request(u, headers={"User-Agent": "droid-tune-privacy-scan"})
@@ -362,14 +376,83 @@ def scan_remote(denylist: List[str]) -> Tuple[List[Hit], int]:
     return hits, n
 
 
+def blob_paths() -> Dict[str, List[str]]:
+    """blob sha → 它在不同提交里对应的路径列表。"""
+    code, out = git("rev-list", "--objects", "--all")
+    if code != 0:
+        return {}
+    m: Dict[str, List[str]] = {}
+    for ln in out.splitlines():
+        parts = ln.split(" ", 1)
+        if len(parts) == 2:
+            m.setdefault(parts[0], []).append(parts[1])
+    return m
+
+
+def ignored_blob_hashes(pats: List[str]) -> set:
+    """被放行文件的当前内容哈希 —— 用于识别「没有路径信息」的悬空 blob。"""
+    out = set()
+    for rel in iter_tracked_files():
+        if not is_ignored(rel, pats):
+            continue
+        code, h = git("hash-object", os.path.join(ROOT, rel))
+        if code == 0 and h.strip():
+            out.add(h.strip())
+    return out
+
+
+def strip_json_comments(text: str) -> str:
+    """去掉 JSON 里的 // 和 /* */ 注释，但不动字符串内部的内容。"""
+    res = []
+    i = 0
+    n = len(text)
+    in_str = False
+    while i < n:
+        c = text[i]
+        if in_str:
+            res.append(c)
+            if c == "\\" and i + 1 < n:
+                res.append(text[i + 1])
+                i += 2
+                continue
+            if c == '"':
+                in_str = False
+            i += 1
+            continue
+        if c == '"':
+            in_str = True
+            res.append(c)
+            i += 1
+            continue
+        if c == "/" and i + 1 < n and text[i + 1] == "/":
+            while i < n and text[i] != "\n":
+                i += 1
+            continue
+        if c == "/" and i + 1 < n and text[i + 1] == "*":
+            i += 2
+            while i + 1 < n and not (text[i] == "*" and text[i + 1] == "/"):
+                i += 1
+            i += 2
+            continue
+        res.append(c)
+        i += 1
+    return "".join(res)
+
+
 def load_local_config(path: Optional[str]) -> Tuple[List[str], List[str]]:
-    """本地 denylist：把你自己的真实设备号写在这里，这个文件不要提交。"""
+    """本地 denylist：把你自己的真实设备号写在这里，这个文件不要提交。
+
+    解析失败会**明确报错**并返回空 —— 静默失败会让人误以为 denylist 生效了。
+    """
     cand = path or os.path.join(ROOT, ".privacy-local.json")
     if not os.path.isfile(cand):
         return [], []
+    raw = open(cand, encoding="utf-8").read()
     try:
-        data = json.load(open(cand, encoding="utf-8"))
-    except Exception:  # noqa: BLE001
+        data = json.loads(strip_json_comments(raw))
+    except Exception as e:  # noqa: BLE001
+        print(f"[警告] 本地配置 {os.path.basename(cand)} 解析失败：{e}")
+        print("       denylist 未生效，请检查文件是否为合法 JSON（可含 // 注释，但不能有逗号尾随）。")
         return [], []
     dl = data.get("denylist") or []
     ig = data.get("ignore") or []

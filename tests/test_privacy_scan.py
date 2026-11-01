@@ -12,6 +12,7 @@
 """
 
 import importlib.util
+import json
 import os
 import struct
 import sys
@@ -166,6 +167,45 @@ class TestLuhn(unittest.TestCase):
 
     def test_bad_luhn(self):
         self.assertFalse(scan._luhn_ok("1234567890123456"))
+
+
+class TestJsonCommentStripper(unittest.TestCase):
+    def test_removes_line_and_block_comments(self):
+        raw = '{\n  // 注释\n  "a": 1, /* 块注释 */ "b": 2\n}'
+        self.assertEqual(json.loads(scan.strip_json_comments(raw)), {"a": 1, "b": 2})
+
+    def test_keeps_slashes_inside_strings(self):
+        """字符串里的 // 不能被当注释吃掉（URL 会中招）。"""
+        raw = '{"u": "https://github.com/x"}'
+        self.assertEqual(json.loads(scan.strip_json_comments(raw)), {"u": "https://github.com/x"})
+
+    def test_example_file_is_valid_json(self):
+        """示例模板必须是合法 JSON —— 否则用户复制过去后 denylist 静默失效。"""
+        p = os.path.join(ROOT, "tools", "privacy-local.json.example")
+        data = json.loads(scan.strip_json_comments(open(p, encoding="utf-8").read()))
+        self.assertIn("denylist", data)
+        self.assertIn("ignore", data)
+
+
+class TestIgnoreAppliesEverywhere(unittest.TestCase):
+    """放行规则必须对三种扫描一视同仁，否则 CI 会被自己的示例文件卡死。"""
+
+    def test_example_file_is_in_ignore(self):
+        pats = scan.load_ignore()
+        self.assertTrue(scan.is_ignored("tools/privacy-local.json.example", pats))
+
+    def test_example_file_has_no_rule_triggering_literals(self):
+        """示例文件本身不该含任何能触发规则的明文。"""
+        p = os.path.join(ROOT, "tools", "privacy-local.json.example")
+        hits = []
+        scan.scan_text(open(p, encoding="utf-8").read(), "example", hits, [])
+        self.assertEqual([h for h in hits if h.severity == scan.ERROR], [])
+
+    def test_blob_paths_returns_mapping(self):
+        m = scan.blob_paths()
+        self.assertIsInstance(m, dict)
+        # 本仓库里至少能找到一个已知文件
+        self.assertTrue(any("README" in p for ps in m.values() for p in ps))
 
 
 if __name__ == "__main__":
