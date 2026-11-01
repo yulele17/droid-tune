@@ -1,0 +1,30 @@
+name: privacy-scan
+
+# 提交前隐私自查：仓库里出现设备号 / 邮箱 / 密钥等个人信息时阻断。
+# 规则见 tools/privacy-scan.py，详见 CONTRIBUTING.md「提交前自查」。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 必须拉全历史，否则 --history 看不到旧版本里残留的敏感内容
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 隐私自查（含 git 历史）
+        run: python tools/privacy-scan.py --history
+
+      - name: 单元测试
+        run: |
+          python -m unittest discover tests -v

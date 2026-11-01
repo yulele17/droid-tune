@@ -138,6 +138,10 @@ ROM         : OS3.0.306.0.WNRCNXM   家族: xiaomi
 
 详见 [docs/实测/红米Note13Pro-HyperOS3.md](docs/实测/红米Note13Pro-HyperOS3.md)。
 
+> 📌 **贡献实测数据前请先跑一遍隐私自查**：`python tools/privacy-scan.py --staged`
+> 实测报告难免带进序列号、UDID、邮箱这类信息，脚本会在提交前把它们揪出来。
+> 详见 [CONTRIBUTING.md](CONTRIBUTING.md) 的「提交前自查」。
+
 ## 明确不做的事（反面清单）
 
 网上流传很广，但收益不明显或副作用常见，本项目不提供：

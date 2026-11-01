@@ -58,6 +58,65 @@ com.mi.health                   # 小米健康（运动/步数数据），实测
 - 不放 `com.xxx厂商.*` 这种宽泛通配（会把厂商名下所有包都保护起来，清单就废了）；
 - 不收"听说会出问题"的条目，要**实测症状**。
 
+## 提交前自查（隐私）
+
+**实测报告必然会带设备信息。** 本项目鼓励大家提交自己机型的实测数据，但序列号、
+UDID、邮箱、Windows 用户名这些东西一旦进了公开仓库就撤不回来了。
+
+所以仓库里带了一个自查脚本，提交前跑一下：
+
+```bash
+python tools/privacy-scan.py --staged      # 提交前：只扫暂存区
+python tools/privacy-scan.py --history     # 深度：连 .git 里没提交的残留一起扫
+python tools/privacy-scan.py --remote      # 核对 GitHub 线上真实内容
+```
+
+有 ERROR 级问题会返回退出码 1，CI 也会因此阻断合并。
+
+### 它能查出什么
+
+| 级别 | 查的东西 |
+|---|---|
+| **ERROR** | 手机号、身份证号、银行卡号（带 Luhn 校验）、IMEI、iOS UDID、Windows 用户名路径、非 noreply 邮箱、TOTP/2FA 种子密钥 |
+| **WARN** | MAC 地址、用户目录、公网 IPv4、高精度经纬度、疑似 TOTP 密钥 |
+| **INFO** | 精确到秒的时间戳（会暴露操作时刻） |
+
+### 三个容易被忽略的坑
+
+1. **`.git` 里可能一直躺着没提交过的敏感内容。**
+   你 `git add` 过一次又改掉的文件，会以悬空对象的形式留在 `.git` 里。
+   `git push` 只推可达对象，所以**它没被上传**——但它一直在你本机。
+   `--history` 会把对象库整个翻一遍，并区分「已发布」和「仅本地」。
+
+2. **图片会带元数据。** PNG 的 `tEXt`/`eXIf`、JPEG 的 EXIF 里可能塞着 GPS 坐标和机型。
+   提交截图前用 `exiftool -all= file.png` 清一遍。
+
+3. **commit 作者信息是永久的。** 如果 `git config user.email` 没设好，
+   Git 会把你的 Windows 用户名写进每一个 commit 且永久公开。
+   请用 GitHub noreply 邮箱：`<用户名>@users.noreply.github.com`。
+
+### 把你的设备号加进本地 denylist
+
+规则靠正则只能抓有固定格式的东西，序列号这种抓不住 —— 所以要你自己登记：
+
+```bash
+cp tools/privacy-local.json.example .privacy-local.json
+# 编辑 .privacy-local.json，填上你的真实序列号 / UDID
+python tools/privacy-scan.py --staged
+```
+
+`.privacy-local.json` 已被 `.gitignore` 排除，**不会进仓库**。
+
+### 确实需要保留原文时
+
+在 `.privacyignore` 里按 glob 放行（支持 `#` 注释）：
+
+```
+docs/实测/*.md
+```
+
+放行只是「不报告」，不代表安全，请自己确认那确实是公开信息。
+
 ## 代码改动
 
 几条硬约束：
